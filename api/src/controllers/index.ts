@@ -8,6 +8,24 @@ import bcrypt from 'bcrypt';
 const saltRounds = bcrypt.genSaltSync(12);
 import jwt from 'jsonwebtoken';
 
+export async function auth(req: Request, res: Response, next: NextFunction) {
+  const { token } = req.cookies;
+  if (!token) {
+    res.status(401);
+    const error = new Error('Token is invalid or not provided.');
+    return next(error);
+  }
+
+  const foundUser = jwt.verify(token, JWT_SECRET || '');
+  if (!foundUser) {
+    res.status(401);
+    const error = new Error('Token is invalid or not provided.');
+    return next(error);
+  }
+
+  res.json(foundUser);
+}
+
 export async function register(
   req: Request,
   res: Response,
