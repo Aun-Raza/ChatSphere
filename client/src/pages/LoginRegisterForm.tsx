@@ -1,17 +1,37 @@
 import { useState } from 'react';
+import axios, { AxiosError } from 'axios';
+import { UserProps } from '../types/User';
 
 const LoginRegisterForm = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
-  const [errorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  async function handleFormSubmit(ev: React.FormEvent) {
+    ev.preventDefault();
+    setErrorMsg('');
+
+    try {
+      const url = isLogin ? '/login' : '/register';
+      const { data } = await axios.post<UserProps>(url, { username, password });
+      console.log(data);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.log('ERROR', error);
+        const newErrorMsg: string = error.response?.data.error;
+        setErrorMsg(newErrorMsg);
+      }
+    }
+  }
+
   return (
     <div className='flex flex-col h-full mt-12'>
       <div className='w-min mx-auto border p-8 rounded-md'>
         <h2 className='text-center font-semibold text-4xl mb-4'>
           {isLogin ? 'Login' : 'Register'}
         </h2>
-        <form className='flex flex-col gap-3'>
+        <form onSubmit={handleFormSubmit} className='flex flex-col gap-3'>
           <fieldset className='flex items-center'>
             <label className='text-lg w-24' htmlFor='username'>
               Username
