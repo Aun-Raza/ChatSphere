@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
+const { JWT_SECRET } = process.env;
 import UserModel from '../models/User';
 import _ from 'lodash';
 import bcrypt from 'bcrypt';
 const saltRounds = bcrypt.genSaltSync(12);
+import jwt from 'jsonwebtoken';
 
 export async function register(
   req: Request,
@@ -29,7 +33,13 @@ export async function register(
     username,
     password: hashedPassword,
   });
-  res.json(_.pick(newUser, ['_id', 'username']));
+
+  const newUserSelectedProps = _.pick(newUser, ['_id', 'username']);
+  const token = jwt.sign(newUserSelectedProps, JWT_SECRET || '');
+  res
+    .cookie('token', token, { sameSite: 'none', secure: true })
+    .status(201)
+    .json(newUserSelectedProps);
 }
 
 export async function login(req: Request, res: Response, next: NextFunction) {
@@ -55,7 +65,12 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     return next(error);
   }
 
-  res.json(_.pick(foundUser, ['_id', 'username']));
+  const newUserSelectedProps = _.pick(foundUser, ['_id', 'username']);
+  const token = jwt.sign(newUserSelectedProps, JWT_SECRET || '');
+  res
+    .cookie('token', token, { sameSite: 'none', secure: true })
+    .status(201)
+    .json(newUserSelectedProps);
 }
 
 export function errorhandler(
