@@ -2,9 +2,10 @@ import ws, { WebSocket, WebSocketServer } from 'ws';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { UserProps } from '../types/User';
-import { IncomingMessage } from 'http';
+import { MessageType } from '../types/Message';
 dotenv.config();
 const { JWT_SECRET } = process.env;
+import { v4 as uuidv4 } from 'uuid';
 
 interface CustomClient extends ws {
   _id: string;
@@ -41,6 +42,21 @@ export default function webSocket(server: any) {
     customClient._id = foundUser._id;
     customClient.username = foundUser.username;
     broadcastAllClients(wss);
+
+    customClient.on('message', (buffer) => {
+      const { senderId, recipientId, message } = JSON.parse(
+        buffer.toString()
+      ) as MessageType;
+
+      const uniqueId = uuidv4();
+      Array.from(wss.clients)
+        .filter((client) => (client as CustomClient)._id === recipientId)
+        .map((c) =>
+          c.send(
+            JSON.stringify({ _id: uniqueId, senderId, recipientId, message })
+          )
+        );
+    });
   });
 
   function broadcastAllClients(wss: ws.Server) {

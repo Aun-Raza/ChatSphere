@@ -16,6 +16,7 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/lodash": "^4.14.195",
     "@types/node": "^20.4.4",
+    "@types/uuid": "^9.0.2",
     "@types/ws": "^8.5.5",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
@@ -30,6 +31,7 @@
     "jsonwebtoken": "^9.0.1",
     "lodash": "^4.17.21",
     "mongoose": "^7.4.0",
+    "uuid": "^9.0.0",
     "ws": "^8.13.0"
   }
 }

@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import ChatView from '../layout/ChatView';
 import Sidebar from '../layout/Sidebar';
 import { UserProps } from '../types/User';
+import { removeClientsDuplications } from '../utils/utils';
+import { UserContext, UserContextType } from '../context/UserContext';
+import { MessageType } from '../types/Message';
 
 const Chat = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const { id } = useContext(UserContext) as UserContextType;
 
   useEffect(() => {
     connectToWs();
@@ -21,32 +25,28 @@ const Chat = () => {
       console.log('Connection established', ev);
     });
     ws.addEventListener('message', handleMessage);
-    ws.addEventListener('close', () => {
-      setTimeout(() => {
-        console.log('Disconnected. Trying to reconnect.');
-        connectToWs();
-      }, 1000);
-    });
   }
 
   function handleMessage(ev: MessageEvent<string>) {
     const messageData = JSON.parse(ev.data);
     if ('clients' in messageData) {
-      removeClientsDuplications(messageData.clients);
+      const clients = removeClientsDuplications(messageData.clients, id || '');
+      setClients(clients);
+    } else if ('message' in messageData) {
+      setMessages((prev) => prev.concat(messageData));
     }
   }
 
-  function removeClientsDuplications(dupClients: UserProps[]) {
-    const dict: { [_id: string]: string } = {};
-    dupClients.forEach((client) => {
-      const { _id, username } = client;
-      dict[_id] = username;
-    });
-    const clients: UserProps[] = [];
-    for (const [_id, username] of Object.entries(dict)) {
-      clients.push({ _id, username });
-    }
-    setClients(clients);
+  function sendMessage(msg: string) {
+    if (!ws) return;
+    const messageObj = {
+      senderId: id || '',
+      recipientId: selectedUserId || '',
+      message: msg || '',
+    };
+    ws.send(JSON.stringify(messageObj));
+    const messageObjWithId = { ...messageObj, _id: Date.now().toString() };
+    setMessages((prev) => prev.concat(messageObjWithId));
   }
 
   return (
@@ -56,7 +56,11 @@ const Chat = () => {
         selectedUserId={selectedUserId}
         clients={clients}
       />
-      <ChatView />
+      <ChatView
+        hideTextForm={selectedUserId === null}
+        onMessage={sendMessage}
+        messages={messages}
+      />
     </div>
   );
 };
