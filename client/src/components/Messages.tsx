@@ -12,11 +12,13 @@ const Messages = ({ messages }: { messages: MessageType[] }) => {
         ({ _id, message, senderId }) => (
           <div
             key={_id}
-            className={'flex my-2 ' + (senderId === id ? '' : 'justify-end')}
+            className={
+              'flex my-2 px-3 ' + (senderId === id ? '' : 'justify-end')
+            }
           >
             <div
               className={
-                'border py-2 px-3 rounded-md ' +
+                'border py-2 px-3 rounded-md break-words max-w-full ' +
                 (senderId === id ? 'bg-blue-400 text-white ms-1' : 'me-1')
               }
             >
