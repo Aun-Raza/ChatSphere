@@ -1,12 +1,18 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import { UserProps } from '../types/User';
+import { UserContext, UserContextType } from '../context/UserContext';
+import { useNavigate } from 'react-router-dom';
 
 const LoginRegisterForm = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const { setId, setUsername: setLoggedInUsername } = useContext(
+    UserContext
+  ) as UserContextType;
+  const navigate = useNavigate();
 
   async function handleFormSubmit(ev: React.FormEvent) {
     ev.preventDefault();
@@ -15,7 +21,9 @@ const LoginRegisterForm = () => {
     try {
       const url = isLogin ? '/login' : '/register';
       const { data } = await axios.post<UserProps>(url, { username, password });
-      console.log(data);
+      setId(data._id);
+      setLoggedInUsername(data.username);
+      navigate('/chat');
     } catch (error) {
       if (error instanceof AxiosError) {
         console.log('ERROR', error);

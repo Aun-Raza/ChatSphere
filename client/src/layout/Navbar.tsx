@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { UserContext, UserContextType } from '../context/UserContext';
 
 const Navbar = () => {
-  const { username } = useContext<UserContextType | null>(UserContext);
+  const { username } = useContext(UserContext) as UserContextType;
   return (
     <nav className='p-3 border bg-red-400 text-white font-semibold flex'>
       <h1>ChatSphere</h1>
