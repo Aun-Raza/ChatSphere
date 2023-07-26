@@ -5,6 +5,7 @@ import { UserProps } from '../types/User';
 import { MessageType } from '../types/Message';
 dotenv.config();
 const { JWT_SECRET } = process.env;
+import MessageModel from '../models/Message';
 import { v4 as uuidv4 } from 'uuid';
 
 interface CustomClient extends ws {
@@ -43,17 +44,27 @@ export default function webSocket(server: any) {
     customClient.username = foundUser.username;
     broadcastAllClients(wss);
 
-    customClient.on('message', (buffer) => {
+    customClient.on('message', async (buffer) => {
       const { senderId, recipientId, message } = JSON.parse(
         buffer.toString()
       ) as MessageType;
 
-      const uniqueId = uuidv4();
+      const messageDoc = await MessageModel.create({
+        senderId,
+        recipientId,
+        message,
+      });
+
       Array.from(wss.clients)
         .filter((client) => (client as CustomClient)._id === recipientId)
         .map((c) =>
           c.send(
-            JSON.stringify({ _id: uniqueId, senderId, recipientId, message })
+            JSON.stringify({
+              _id: messageDoc._id,
+              senderId,
+              recipientId,
+              message,
+            })
           )
         );
     });

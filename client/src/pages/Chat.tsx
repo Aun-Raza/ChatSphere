@@ -1,20 +1,34 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useRef } from 'react';
 import ChatView from '../layout/ChatView';
 import Sidebar from '../layout/Sidebar';
 import { UserProps } from '../types/User';
 import { removeClientsDuplications } from '../utils/utils';
 import { UserContext, UserContextType } from '../context/UserContext';
 import { MessageType } from '../types/Message';
+import axios from 'axios';
 
 const Chat = () => {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageType[]>([]);
   const { id } = useContext(UserContext) as UserContextType;
+  const selectedUserIdRef = useRef(selectedUserId); // Initialize the ref with the state
 
   useEffect(() => {
     connectToWs();
   }, []);
+
+  useEffect(() => {
+    selectedUserIdRef.current = selectedUserId; // Update the ref whenever the state changes
+  }, [selectedUserId]);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      axios.get<MessageType[]>('/messages/' + selectedUserId).then((res) => {
+        setMessages(res.data);
+      });
+    }
+  }, [selectedUserId]);
 
   const [clients, setClients] = useState<UserProps[]>([]);
 
@@ -33,7 +47,15 @@ const Chat = () => {
       const clients = removeClientsDuplications(messageData.clients, id || '');
       setClients(clients);
     } else if ('message' in messageData) {
-      setMessages((prev) => prev.concat(messageData));
+      console.log(
+        'IsSelected',
+        (messageData as MessageType).senderId === selectedUserIdRef.current,
+        messageData,
+        selectedUserIdRef.current
+      );
+      if ((messageData as MessageType).senderId === selectedUserIdRef.current) {
+        setMessages((prev) => prev.concat(messageData));
+      }
     }
   }
 

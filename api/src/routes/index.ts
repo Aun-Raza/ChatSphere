@@ -1,7 +1,16 @@
 import express from 'express';
-import { register, errorhandler, notFound, login, auth } from '../controllers';
+import {
+  register,
+  errorhandler,
+  notFound,
+  login,
+  auth,
+  getMessages,
+} from '../controllers';
 
 const router = express.Router();
+
+router.get('/messages/:id', getMessages);
 
 router.get('/auth', auth);
 

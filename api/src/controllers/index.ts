@@ -7,6 +7,43 @@ import _ from 'lodash';
 import bcrypt from 'bcrypt';
 const saltRounds = bcrypt.genSaltSync(12);
 import jwt from 'jsonwebtoken';
+import MessageModel from '../models/Message';
+import { UserProps } from '../types/User';
+
+export async function getMessages(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { id } = req.params;
+
+  if (!id) {
+    res.status(401);
+    const error = new Error('Given Id is not provided.');
+    return next(error);
+  }
+
+  const { token } = req.cookies;
+  if (!token) {
+    res.status(401);
+    const error = new Error('Token is invalid or not provided.');
+    return next(error);
+  }
+
+  const foundUser = jwt.verify(token, JWT_SECRET || '') as UserProps;
+  if (!foundUser) {
+    res.status(401);
+    const error = new Error('Token is invalid or not provided.');
+    return next(error);
+  }
+
+  const messages = await MessageModel.find({
+    senderId: { $in: [foundUser._id, id] },
+    recipientId: { $in: [foundUser._id, id] },
+  }).sort({ createdAt: 1 });
+
+  res.json(messages);
+}
 
 export async function auth(req: Request, res: Response, next: NextFunction) {
   const { token } = req.cookies;
